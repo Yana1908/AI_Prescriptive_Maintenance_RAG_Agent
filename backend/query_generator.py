@@ -5,20 +5,9 @@ def generate_query(alert):
     temperature = alert["temperature"]
 
     query = (
-        f"How to repair machine {machine} "
-        f"with error code {error} "
-        f"when temperature is {temperature}°C?"
+        f"How to troubleshoot error code {error} "
+        f"for machine {machine} "
+        f"when temperature is {temperature}?"
     )
 
     return query
-
-
-if __name__ == "__main__":
-
-    sample_alert = {
-        "machine_id": "PUMP-01",
-        "error_code": "E-404",
-        "temperature": 105
-    }
-
-    print(generate_query(sample_alert))
