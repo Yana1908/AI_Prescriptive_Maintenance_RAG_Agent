@@ -1,51 +1,22 @@
 import json
-import os
 import pickle
-
 from sentence_transformers import SentenceTransformer
 
-# Load embedding model
-print("=" * 60)
-print("LOADING EMBEDDING MODEL...")
-print("=" * 60)
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
-# Read chunk file
-with open("embeddings/chunks.json", "r", encoding="utf-8") as file:
+# Load chunks from chunks.json
+with open("outputs/chunks.json", "r", encoding="utf-8") as file:
     chunks = json.load(file)
 
-print(f"\nTotal Chunks Found: {len(chunks)}")
+# Load embedding model
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
-embeddings = []
-
-print("\nGenerating Embeddings...\n")
+embedding_only = []
 
 for chunk in chunks:
-
-    vector = model.encode(chunk["text"]).tolist()
-
-    embeddings.append({
-        "source": chunk["source"],
-        "chunk_id": chunk["chunk_id"],
-        "text": chunk["text"],
-        "embedding": vector
-    })
-
-print("\nEmbeddings Generated Successfully!")
-
-# Create folder if not exists
-os.makedirs("embeddings/vectors", exist_ok=True)
+    embedding = model.encode(chunk["text"]).tolist()
+    embedding_only.append(embedding)
 
 # Save embeddings
-output_file = "embeddings/vectors/manual_embeddings.pkl"
+with open("embeddings/vectors/manual_embeddings.pkl", "wb") as file:
+    pickle.dump(embedding_only, file)
 
-with open(output_file, "wb") as file:
-    pickle.dump(embeddings, file)
-
-print("\nSaved Successfully:")
-print(output_file)
-
-print("=" * 60)
-print("DAY 5 COMPLETED")
-print("=" * 60)
+print("Embeddings generated successfully!")
