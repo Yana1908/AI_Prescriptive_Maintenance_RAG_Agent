@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from backend.query_generator import generate_query
 from backend.retriever import search_manual
 from backend.recommendation import generate_recommendation
+from backend.logger import save_log
 
 app = FastAPI()
 
@@ -50,6 +51,7 @@ def receive_alert(alert: IoTAlert):
 
     # Generate maintenance recommendation
     recommendation = generate_recommendation(results)
+    save_log(alert_data, query, recommendation)
 
     return {
         "status": "Success",
