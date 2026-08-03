@@ -1,55 +1,49 @@
+import os
 import json
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-# Load embedding model
+INDEX_FILE = "vector_store/faiss.index"
+METADATA_FILE = "embeddings/metadata.json"
+
+print("="*60)
+print("RAG RETRIEVER")
+print("="*60)
+
+print("\nLoading FAISS Index...")
+index = faiss.read_index(INDEX_FILE)
+
+print("Loading Metadata...")
+with open(METADATA_FILE, "r", encoding="utf-8") as f:
+    metadata = json.load(f)
+
+print("Loading Embedding Model...")
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Load FAISS index
-index = faiss.read_index("embeddings/faiss/manual_index.faiss")
+while True:
 
-# Load chunks
-with open("embeddings/chunks.json", "r", encoding="utf-8") as f:
-    chunks = json.load(f)
+    query = input("\nEnter your question (type exit to quit): ")
 
+    if query.lower() == "exit":
+        break
 
-def search_manual(query, top_k=5):
-    """
-    Search the maintenance manual using FAISS.
-    """
+    query_embedding = model.encode([query])
 
-    query_embedding = model.encode([query]).astype("float32")
+    distances, indices = index.search(
+        np.array(query_embedding, dtype=np.float32),
+        k=3
+    )
 
-    distances, indices = index.search(query_embedding, top_k)
+    print("\nTop Results\n")
 
-    results = []
+    for i, idx in enumerate(indices[0], start=1):
 
-    for idx in indices[0]:
-        if idx != -1:
-            results.append(chunks[idx])
-
-    return results
-
-
-if __name__ == "__main__":
-
-    while True:
-
-        question = input("\nAsk a question (type exit to quit): ")
-
-        if question.lower() == "exit":
-            break
-
-        answers = search_manual(question)
-
-        print("\nTop Results:\n")
-
-        for i, ans in enumerate(answers, 1):
-
-            print("=" * 60)
-            print(f"Result {i}")
-            print("Source:", ans["source"])
-            print("Chunk:", ans["chunk_id"])
-            print(ans["text"][:600])
-            print("=" * 60)
+        print("="*60)
+        print(f"Result {i}")
+        print(f"Document : {metadata[idx]['document']}")
+        print(f"Chunk ID : {metadata[idx]['chunk_id']}")
+        print(f"Distance : {distances[0][i-1]:.4f}")
+        print()
+        print(metadata[idx]["text"][:600])
+        print("="*60)
