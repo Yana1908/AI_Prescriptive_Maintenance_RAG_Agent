@@ -45,7 +45,7 @@ def search(query: Query):
             "document": metadata[idx]["document"],
             "chunk_id": metadata[idx]["chunk_id"],
             "score": float(score),
-            "text": metadata[idx]["text"]
+            "text": metadata[idx]["text"][:500]
         })
 
     return {
