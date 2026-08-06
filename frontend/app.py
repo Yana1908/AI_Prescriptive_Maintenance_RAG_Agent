@@ -12,6 +12,8 @@ st.set_page_config(
     page_icon="🤖",
     layout="wide"
 )
+if "history" not in st.session_state:
+    st.session_state.history = []
 
 # ==============================
 # Sidebar
@@ -44,7 +46,22 @@ st.sidebar.write("✅ Python")
 
 st.sidebar.markdown("---")
 
+st.sidebar.markdown("---")
+
+st.sidebar.subheader("Recent Searches")
+
 st.sidebar.success("Version 1.0")
+if st.sidebar.button("🗑 Clear History"):
+    st.session_state.history = []
+    st.rerun()
+
+if len(st.session_state.history) == 0:
+    st.sidebar.info("No searches yet.")
+
+else:
+
+    for q in reversed(st.session_state.history[-5:]):
+        st.sidebar.write("•", q)
 
 # ==============================
 # Main Page
@@ -93,6 +110,7 @@ if st.button("🔍 Search"):
                 if response.status_code == 200:
 
                     data = response.json()
+                    st.session_state.history.append(question)
 
                     st.success(
                         f"Search completed in {data['search_time']} seconds"
