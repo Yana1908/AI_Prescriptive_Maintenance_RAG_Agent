@@ -1,54 +1,60 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import faiss
-import json
-import numpy as np
-from sentence_transformers import SentenceTransformer
+from backend.rag_pipeline import retrieve
 
-app = FastAPI(title="AI Prescriptive Maintenance RAG API")
+# ------------------------------------
+# FastAPI App
+# ------------------------------------
+app = FastAPI(
+    title="AI Prescriptive Maintenance RAG API",
+    description="API for Semantic Search using FAISS and Sentence Transformers",
+    version="1.0"
+)
 
-INDEX_FILE = "vector_store/faiss.index"
-METADATA_FILE = "embeddings/metadata.json"
-
-index = faiss.read_index(INDEX_FILE)
-
-with open(METADATA_FILE, "r", encoding="utf-8") as f:
-    metadata = json.load(f)
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
-
+# ------------------------------------
+# Request Model
+# ------------------------------------
 class Query(BaseModel):
     question: str
 
-
+# ------------------------------------
+# Home Route
+# ------------------------------------
 @app.get("/")
 def home():
-    return {"message": "AI Prescriptive Maintenance RAG API Running"}
+    return {
+        "message": "AI Prescriptive Maintenance RAG API is Running Successfully!"
+    }
 
-
+# ------------------------------------
+# Search Route
+# ------------------------------------
 @app.post("/search")
 def search(query: Query):
 
-    query_embedding = model.encode([query.question])
+    # Empty input validation
+    if not query.question.strip():
+        return {
+            "query": "",
+            "results": [],
+            "message": "Please enter a valid question."
+        }
 
-    distances, indices = index.search(
-        np.array(query_embedding, dtype=np.float32),
-        k=3
-    )
-
-    results = []
-
-    for score, idx in zip(distances[0], indices[0]):
-
-        results.append({
-            "document": metadata[idx]["document"],
-            "chunk_id": metadata[idx]["chunk_id"],
-            "score": float(score),
-            "text": metadata[idx]["text"][:500]
-        })
+    # Retrieve relevant chunks
+    results = retrieve(query.question)
 
     return {
         "query": query.question,
+        "total_results": len(results),
         "results": results
+    }
+
+# ------------------------------------
+# Health Check
+# ------------------------------------
+@app.get("/health")
+def health():
+    return {
+        "status": "Running",
+        "service": "AI Prescriptive Maintenance RAG API"
     }
