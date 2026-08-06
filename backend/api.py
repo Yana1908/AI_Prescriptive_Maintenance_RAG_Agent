@@ -16,6 +16,7 @@ app = FastAPI(
 # ------------------------------------
 class Query(BaseModel):
     question: str
+    top_k: int = 5
 
 # ------------------------------------
 # Home Route
@@ -29,17 +30,30 @@ def home():
 # ------------------------------------
 # Search Route
 # ------------------------------------
+from time import time
+
 @app.post("/search")
 def search(query: Query):
 
-    # Empty input validation
     if not query.question.strip():
         return {
             "query": "",
             "results": [],
-            "message": "Please enter a valid question."
+            "message": "Question cannot be empty."
         }
 
+    start = time()
+
+    results = retrieve(query.question, query.top_k)
+
+    end = time()
+
+    return {
+        "query": query.question,
+        "total_results": len(results),
+        "search_time": round(end - start, 3),
+        "results": results
+    }
     # Retrieve relevant chunks
     results = retrieve(query.question)
 
